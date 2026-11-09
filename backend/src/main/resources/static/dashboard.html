@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<nav class="site-nav">
+    <a class="brand" href="dashboard.html" aria-label="Student Evaluation System dashboard">
+        <span class="brand-mark" aria-hidden="true">SE</span>
+        <span class="brand-copy">
+            <strong>Student Evaluation System</strong>
+            <small>Student Portal</small>
+        </span>
+    </a>
+    <div class="nav-actions">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <button class="logout" onclick="logout()">Sign out</button>
+    </div>
+</nav>
+
+<div class="container">
+
+    <div class="page-heading">
+        <p class="eyebrow">STUDENT SERVICES</p>
+        <h1>Your dashboard</h1>
+        <p>Share your feedback about your instructors.</p>
+    </div>
+
+    <div class="welcome-card">
+
+        <label class="profile-photo" for="studentPhotoInput" title="Choose a profile photo">
+            <img id="studentPhoto" alt="Student profile photo" hidden>
+            <span id="photoPlaceholder" aria-hidden="true"></span>
+        </label>
+        <input id="studentPhotoInput" class="photo-input" type="file" accept="image/*" aria-label="Choose a profile photo">
+
+        <div class="welcome-copy">
+            <h1 id="studentName">Welcome</h1>
+            <p id="studentInfo"></p>
+        </div>
+
+    </div>
+
+    <div class="dashboard-grid">
+
+        <div class="card action-card">
+            <p class="card-kicker">SHARE YOUR FEEDBACK</p>
+
+            <h2>Instructor Evaluation</h2>
+
+            <p>
+                Evaluate your instructor and
+                provide your feedback.
+            </p>
+
+            <a class="button-link" href="evaluation.html">
+                Evaluate Instructor <span aria-hidden="true">→</span>
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const student =
+    JSON.parse(
+        localStorage.getItem("student")
+    );
+
+if (!student) {
+    window.location.href = "index.html";
+}
+
+document.getElementById("studentName")
+    .textContent =
+    `Welcome, ${student.name}`;
+
+document.getElementById("studentInfo")
+    .textContent =
+    `${student.studentNumber} | ${student.course} | ${student.yearLevel}`;
+
+const studentPhoto = document.getElementById("studentPhoto");
+const photoPlaceholder = document.getElementById("photoPlaceholder");
+const savedPhotoKey = `studentPhoto-${student.id}`;
+const savedPhoto = localStorage.getItem(savedPhotoKey);
+
+function buildPhotoCandidates(studentNumber) {
+    const rawNumber = String(studentNumber || "").trim();
+    const variants = new Set();
+    const extensions = ["jpg", "jpeg", "png"];
+
+    if (rawNumber) {
+        variants.add(rawNumber);
+
+        const hyphenIndex = rawNumber.lastIndexOf("-");
+        let prefix = "";
+        let digits = rawNumber;
+
+        if (hyphenIndex >= 0) {
+            prefix = rawNumber.slice(0, hyphenIndex);
+            digits = rawNumber.slice(hyphenIndex + 1);
+        }
+
+        if (/^\d+$/.test(digits)) {
+            const compactDigits = digits.replace(/^0+/, "") || "0";
+            const paddedThree = compactDigits.padStart(3, "0");
+            const paddedFour = digits.padStart(4, "0");
+
+            if (prefix) {
+                variants.add(`${prefix}-${paddedThree}`);
+                variants.add(`${prefix}-${paddedFour}`);
+                variants.add(`${prefix}${paddedThree}`);
+                variants.add(`${prefix}${paddedFour}`);
+            } else {
+                variants.add(paddedThree);
+                variants.add(paddedFour);
+            }
+        }
+    }
+
+    const candidates = [];
+    variants.forEach((value) => {
+        extensions.forEach((extension) => {
+            candidates.push(`images/${encodeURIComponent(value)}.${extension}`);
+        });
+    });
+
+    return [...new Set(candidates)];
+}
+
+function showStudentPhoto(photo) {
+    studentPhoto.src = photo;
+    studentPhoto.hidden = false;
+    photoPlaceholder.hidden = true;
+}
+
+if (savedPhoto) {
+    showStudentPhoto(savedPhoto);
+} else {
+    photoPlaceholder.textContent = student.name
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0].toUpperCase())
+        .join("");
+
+    const photoCandidates = buildPhotoCandidates(student.studentNumber);
+    let photoIndex = 0;
+
+    function tryLoadNextPhoto() {
+        if (photoIndex >= photoCandidates.length) {
+            studentPhoto.hidden = true;
+            photoPlaceholder.hidden = false;
+            return;
+        }
+
+        studentPhoto.onload = function() {
+            studentPhoto.hidden = false;
+            photoPlaceholder.hidden = true;
+        };
+
+        studentPhoto.onerror = function() {
+            photoIndex += 1;
+            tryLoadNextPhoto();
+        };
+
+        studentPhoto.src = photoCandidates[photoIndex];
+    }
+
+    tryLoadNextPhoto();
+}
+
+document.getElementById("studentPhotoInput")
+    .addEventListener("change", function(event) {
+        const file = event.target.files[0];
+        if (!file || !file.type.startsWith("image/")) return;
+
+        const reader = new FileReader();
+        reader.addEventListener("load", function() {
+            try {
+                localStorage.setItem(savedPhotoKey, reader.result);
+                showStudentPhoto(reader.result);
+            } catch (error) {
+                alert("This photo is too large to save. Please choose a smaller image.");
+            }
+        });
+        reader.readAsDataURL(file);
+    });
+
+function logout() {
+
+    localStorage.removeItem("student");
+
+    window.location.href = "index.html";
+}
+
+</script>
+
+</body>
+</html>

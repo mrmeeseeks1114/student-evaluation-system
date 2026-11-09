@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Instructor Evaluation</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<nav class="site-nav">
+    <a class="brand" href="dashboard.html" aria-label="Student Evaluation System dashboard">
+        <span class="brand-mark" aria-hidden="true">SE</span>
+        <span class="brand-copy">
+            <strong>Student Evaluation System</strong>
+            <small>Student Portal</small>
+        </span>
+    </a>
+    <div class="nav-actions">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <button class="logout" onclick="logout()">Sign out</button>
+    </div>
+</nav>
+
+
+<div class="container">
+
+    <div class="page-heading">
+        <p class="eyebrow">STUDENT SERVICES</p>
+        <h1>Instructor evaluation</h1>
+        <p>Your considered feedback supports a stronger learning experience.</p>
+    </div>
+
+    <div class="form-card">
+
+        <h2 class="form-title">Evaluation details</h2>
+
+        <p class="form-intro">Please answer each question honestly and thoughtfully.</p>
+
+
+        <form id="evaluationForm">
+
+            <label for="instructor">
+                Instructor
+            </label>
+
+            <select id="instructor" required>
+
+                <option value="">
+                    Select Instructor
+                </option>
+
+                <option value="John Smith">
+                    John Smith
+                </option>
+
+                <option value="Sarah Johnson">
+                    Sarah Johnson
+                </option>
+
+                <option value="Michael Brown">
+                    Michael Brown
+                </option>
+
+            </select>
+
+
+            <label for="subject">
+                Subject
+            </label>
+
+            <select id="subject" required>
+
+                <option value="">
+                    Select Subject
+                </option>
+
+                <option value="Web Development">
+                    Web Development
+                </option>
+
+                <option value="System Integration">
+                    System Integration
+                </option>
+
+                <option value="Database Management">
+                    Database Management
+                </option>
+
+            </select>
+
+
+            <h3>
+                Evaluation Questions
+            </h3>
+
+
+            <div class="question">
+
+                <label>
+                    1. The instructor explains
+                    the lessons clearly.
+                </label>
+
+                <select class="rating" required>
+
+                    <option value="">
+                        Select Rating
+                    </option>
+
+                    <option value="5">
+                        5 - Excellent
+                    </option>
+
+                    <option value="4">
+                        4 - Very Good
+                    </option>
+
+                    <option value="3">
+                        3 - Good
+                    </option>
+
+                    <option value="2">
+                        2 - Fair
+                    </option>
+
+                    <option value="1">
+                        1 - Poor
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="question">
+
+                <label>
+                    2. The instructor is
+                    prepared for class.
+                </label>
+
+                <select class="rating" required>
+
+                    <option value="">
+                        Select Rating
+                    </option>
+
+                    <option value="5">
+                        5 - Excellent
+                    </option>
+
+                    <option value="4">
+                        4 - Very Good
+                    </option>
+
+                    <option value="3">
+                        3 - Good
+                    </option>
+
+                    <option value="2">
+                        2 - Fair
+                    </option>
+
+                    <option value="1">
+                        1 - Poor
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="question">
+
+                <label>
+                    3. The instructor encourages
+                    student participation.
+                </label>
+
+                <select class="rating" required>
+
+                    <option value="">
+                        Select Rating
+                    </option>
+
+                    <option value="5">
+                        5 - Excellent
+                    </option>
+
+                    <option value="4">
+                        4 - Very Good
+                    </option>
+
+                    <option value="3">
+                        3 - Good
+                    </option>
+
+                    <option value="2">
+                        2 - Fair
+                    </option>
+
+                    <option value="1">
+                        1 - Poor
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="question">
+
+                <label>
+                    4. The instructor responds
+                    to questions effectively.
+                </label>
+
+                <select class="rating" required>
+
+                    <option value="">
+                        Select Rating
+                    </option>
+
+                    <option value="5">
+                        5 - Excellent
+                    </option>
+
+                    <option value="4">
+                        4 - Very Good
+                    </option>
+
+                    <option value="3">
+                        3 - Good
+                    </option>
+
+                    <option value="2">
+                        2 - Fair
+                    </option>
+
+                    <option value="1">
+                        1 - Poor
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="question">
+
+                <label>
+                    5. The instructor provides
+                    useful learning activities.
+                </label>
+
+                <select class="rating" required>
+
+                    <option value="">
+                        Select Rating
+                    </option>
+
+                    <option value="5">
+                        5 - Excellent
+                    </option>
+
+                    <option value="4">
+                        4 - Very Good
+                    </option>
+
+                    <option value="3">
+                        3 - Good
+                    </option>
+
+                    <option value="2">
+                        2 - Fair
+                    </option>
+
+                    <option value="1">
+                        1 - Poor
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <label for="overallRating">
+                Overall Rating
+            </label>
+
+            <input
+                type="number"
+                id="overallRating"
+                min="1"
+                max="5"
+                step="0.1"
+                placeholder="Example: 4.5"
+                required
+            >
+
+
+            <label for="comments">
+                Comments
+            </label>
+
+            <textarea
+                id="comments"
+                rows="5"
+                placeholder="Write your feedback..."
+            ></textarea>
+
+
+            <button type="submit">
+                Submit Evaluation
+            </button>
+
+        </form>
+
+        <p id="message"></p>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const API_URL =
+    "http://localhost:8081/api";
+
+const student =
+    JSON.parse(
+        localStorage.getItem("student")
+    );
+
+if (!student) {
+    window.location.href = "index.html";
+}
+
+
+document
+    .getElementById("evaluationForm")
+    .addEventListener(
+        "submit",
+        async function(event) {
+
+            event.preventDefault();
+
+            const ratings =
+                document.querySelectorAll(".rating");
+
+            const answers = [];
+
+            ratings.forEach(
+                (rating, index) => {
+
+                    answers.push({
+
+                        questionNumber:
+                            index + 1,
+
+                        rating:
+                            Number(rating.value)
+
+                    });
+
+                }
+            );
+
+
+            const data = {
+
+                studentId:
+                    student.id,
+
+                instructor:
+                    document
+                        .getElementById("instructor")
+                        .value,
+
+                subject:
+                    document
+                        .getElementById("subject")
+                        .value,
+
+                rating:
+                    Number(
+                        document
+                            .getElementById("overallRating")
+                            .value
+                    ),
+
+                comments:
+                    document
+                        .getElementById("comments")
+                        .value,
+
+                answers:
+                    answers
+            };
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/evaluations`,
+                        {
+
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify(data)
+
+                        }
+                    );
+
+
+                const result =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        result.message ||
+                        "Failed to submit evaluation."
+                    );
+
+                }
+
+
+                const message =
+                    document.getElementById(
+                        "message"
+                    );
+
+                message.textContent =
+                    "Evaluation submitted successfully!";
+
+                message.className =
+                    "success";
+
+
+                document
+                    .getElementById(
+                        "evaluationForm"
+                    )
+                    .reset();
+
+
+            } catch (error) {
+
+                const message =
+                    document.getElementById(
+                        "message"
+                    );
+
+                message.textContent =
+                    error.message;
+
+                message.className =
+                    "error";
+
+            }
+
+        }
+    );
+
+
+function logout() {
+
+    localStorage.removeItem("student");
+
+    window.location.href = "index.html";
+}
+
+</script>
+
+</body>
+</html>

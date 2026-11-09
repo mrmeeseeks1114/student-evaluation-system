@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Evaluations</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<nav class="site-nav">
+    <a class="brand" href="dashboard.html" aria-label="Student Evaluation System dashboard">
+        <span class="brand-mark" aria-hidden="true">SE</span>
+        <span class="brand-copy">
+            <strong>Student Evaluation System</strong>
+            <small>Student Portal</small>
+        </span>
+    </a>
+    <div class="nav-actions">
+        <a class="nav-link" href="dashboard.html">Dashboard</a>
+        <button class="logout" onclick="logout()">Sign out</button>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="page-heading">
+        <p class="eyebrow">STUDENT SERVICES</p>
+        <h1>My evaluations</h1>
+        <p>Review the feedback you have submitted.</p>
+    </div>
+
+    <div class="form-card">
+        <h2 class="form-title">Evaluation history</h2>
+        <p class="form-intro">Your submitted instructor evaluations appear here.</p>
+
+        <div id="resultsTableContainer"></div>
+        <p id="message"></p>
+    </div>
+</div>
+
+<script>
+const API_URL = "http://localhost:8081/api";
+const student = JSON.parse(localStorage.getItem("student"));
+
+if (!student) {
+    window.location.href = "index.html";
+}
+
+async function loadResults() {
+    const container = document.getElementById("resultsTableContainer");
+    const message = document.getElementById("message");
+
+    try {
+        const response = await fetch(`${API_URL}/evaluations/student/${student.id}`);
+
+        if (!response.ok) {
+            throw new Error("Unable to load evaluations.");
+        }
+
+        const evaluations = await response.json();
+
+        if (!evaluations.length) {
+            container.innerHTML = "<p class='empty-state'>You have not submitted any evaluations yet.</p>";
+            return;
+        }
+
+        const rows = evaluations
+            .map((evaluation) => `
+                <tr>
+                    <td>${evaluation.instructor}</td>
+                    <td>${evaluation.subject}</td>
+                    <td>${evaluation.rating}</td>
+                    <td>${new Date(evaluation.submittedAt).toLocaleString()}</td>
+                    <td>${evaluation.comments || "No comments"}</td>
+                </tr>
+            `)
+            .join("");
+
+        container.innerHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Instructor</th>
+                        <th>Subject</th>
+                        <th>Overall Rating</th>
+                        <th>Submitted</th>
+                        <th>Comments</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
+        `;
+
+    } catch (error) {
+        message.textContent = error.message;
+        message.className = "error";
+    }
+}
+
+loadResults();
+
+function logout() {
+    localStorage.removeItem("student");
+    window.location.href = "index.html";
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student &amp; Admin Portal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="login-container">
+    <header class="login-brand">
+        <a class="brand" href="index.html" aria-label="Student Evaluation System home">
+            <span class="brand-mark" aria-hidden="true">SE</span>
+            <span class="brand-copy">
+                <strong>Student Evaluation System</strong>
+                <small>Student &amp; Admin Portal</small>
+            </span>
+        </a>
+        <span class="portal-label">STUDENT AND ADMINISTRATOR ACCESS</span>
+    </header>
+
+    <main class="login-layout">
+        <section class="login-intro">
+            <p class="eyebrow">STUDENT &amp; ADMIN ACCESS</p>
+            <h1>A better learning experience starts with student feedback.</h1>
+            <p class="intro-copy">
+                Students can submit instructor feedback. Administrators can
+                securely review all submitted evaluations.
+            </p>
+            <div class="login-note">
+                <span class="note-mark" aria-hidden="true">i</span>
+                <p>Choose Student or Administrator access to sign in.</p>
+            </div>
+        </section>
+
+        <section class="login-card" aria-labelledby="loginTitle">
+            <p class="card-kicker" id="loginKicker">STUDENT ACCESS</p>
+            <h2 id="loginTitle">Welcome back</h2>
+            <p class="login-help">Choose how you want to sign in.</p>
+
+            <div class="login-role-switch" role="group" aria-label="Sign-in type">
+                <button class="role-option is-active" type="button" data-role="student" aria-pressed="true">Student</button>
+                <button class="role-option" type="button" data-role="admin" aria-pressed="false">Administrator</button>
+            </div>
+
+            <form id="studentLoginForm">
+                <label for="studentNumber">Student Number</label>
+                <input
+                    type="text"
+                    id="studentNumber"
+                    placeholder="e.g. 2026-0001"
+                    autocomplete="username"
+                    required
+                >
+                <button type="submit">Continue to student portal <span aria-hidden="true">→</span></button>
+            </form>
+
+            <form id="adminLoginForm" hidden>
+                <label for="adminUsername">Administrator username</label>
+                <input id="adminUsername" type="text" autocomplete="username" required>
+                <label for="adminPassword">Password</label>
+                <input id="adminPassword" type="password" autocomplete="current-password" required>
+                <button type="submit">Sign in to admin portal <span aria-hidden="true">→</span></button>
+            </form>
+
+            <p id="loginMessage" role="status" aria-live="polite"></p>
+            <p class="login-footnote">For enrolled students</p>
+        </section>
+    </main>
+
+    <footer class="login-footer">Student Evaluation System <span aria-hidden="true">•</span> Student &amp; Admin Portal</footer>
+</div>
+
+<script>
+
+const API_URL = "http://localhost:8081/api";
+const JAVA_API_URL = "http://localhost:8081/api";
+
+document
+    .getElementById("studentLoginForm")
+    .addEventListener("submit", async function(event) {
+
+        event.preventDefault();
+
+        const studentNumber =
+            document
+                .getElementById("studentNumber")
+                .value
+                .trim();
+
+        const message =
+            document.getElementById("loginMessage");
+
+        localStorage.removeItem("adminToken");
+
+        try {
+
+            const response = await fetch(
+                `${API_URL}/students/login/${studentNumber}`
+            );
+
+            if (!response.ok) {
+                throw new Error("Student not found.");
+            }
+
+            const student = await response.json();
+
+            localStorage.setItem(
+                "student",
+                JSON.stringify(student)
+            );
+
+            window.location.href = "dashboard.html";
+
+        } catch (error) {
+
+            message.textContent = error.message;
+            message.className = "error";
+
+        }
+
+    });
+
+const roleOptions = document.querySelectorAll(".role-option");
+const studentLoginForm = document.getElementById("studentLoginForm");
+const adminLoginForm = document.getElementById("adminLoginForm");
+const loginTitle = document.getElementById("loginTitle");
+const loginKicker = document.getElementById("loginKicker");
+const loginHelp = document.querySelector(".login-help");
+const loginMessage = document.getElementById("loginMessage");
+const loginFootnote = document.querySelector(".login-footnote");
+
+roleOptions.forEach((option) => {
+    option.addEventListener("click", () => {
+        const isAdmin = option.dataset.role === "admin";
+        localStorage.removeItem(isAdmin ? "student" : "adminToken");
+        roleOptions.forEach((roleOption) => {
+            const active = roleOption === option;
+            roleOption.classList.toggle("is-active", active);
+            roleOption.setAttribute("aria-pressed", String(active));
+        });
+        studentLoginForm.hidden = isAdmin;
+        adminLoginForm.hidden = !isAdmin;
+        loginKicker.textContent = isAdmin ? "ADMINISTRATOR ACCESS" : "STUDENT ACCESS";
+        loginTitle.textContent = isAdmin ? "Administrator sign in" : "Welcome back";
+        loginHelp.textContent = isAdmin
+            ? "Sign in to review all submitted evaluations."
+            : "Enter your student number to sign in.";
+        loginFootnote.textContent = isAdmin
+            ? "Authorized staff only"
+            : "For enrolled students";
+        loginMessage.textContent = "";
+        loginMessage.className = "";
+    });
+});
+
+adminLoginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    loginMessage.textContent = "";
+    loginMessage.className = "";
+
+    try {
+        const response = await fetch(`${JAVA_API_URL}/admin/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username: document.getElementById("adminUsername").value.trim(),
+                password: document.getElementById("adminPassword").value
+            })
+        });
+        const responseText = await response.text();
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) {
+            throw new Error(
+                `The Java API returned a non-JSON response (${response.status}). ` +
+                "Make sure the Java backend is running on port 8081."
+            );
+        }
+
+        let result;
+        try {
+            result = JSON.parse(responseText);
+        } catch {
+            throw new Error("The Java API returned an invalid response. Restart the Java backend and try again.");
+        }
+        if (!response.ok) {
+            throw new Error(result.message || "Administrator sign-in failed.");
+        }
+
+        localStorage.setItem("adminToken", result.token);
+        window.location.href = "admin-results.html";
+    } catch (error) {
+        loginMessage.textContent = error instanceof TypeError
+            ? "Cannot connect to the Java API on port 8081. Start the Java backend, then try again."
+            : error.message || "Unable to sign in.";
+        loginMessage.className = "error";
+    }
+});
+
+</script>
+
+</body>
+</html>

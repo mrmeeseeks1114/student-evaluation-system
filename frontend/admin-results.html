@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submitted Evaluations | Student Evaluation System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="site-nav">
+    <a class="brand" href="admin-results.html" aria-label="Administrator submissions">
+        <span class="brand-mark" aria-hidden="true">SE</span>
+        <span class="brand-copy">
+            <strong>Student Evaluation System</strong>
+            <small>Administrator Portal</small>
+        </span>
+    </a>
+    <div class="nav-actions">
+        <span class="nav-link">All submissions</span>
+        <button class="logout" id="logoutButton" type="button">Sign out</button>
+    </div>
+</nav>
+
+<main class="container admin-container">
+    <header class="page-heading">
+        <p class="eyebrow">ADMINISTRATOR SERVICES</p>
+        <h1>Submitted evaluations</h1>
+        <p>Review evaluations submitted by students. This view is read-only.</p>
+    </header>
+
+    <section class="admin-summary" aria-label="Evaluation summary">
+        <div class="summary-card">
+            <span class="summary-label">Total submissions</span>
+            <strong id="submissionCount">—</strong>
+        </div>
+        <div class="summary-card">
+            <span class="summary-label">Average overall rating</span>
+            <strong id="averageRating">—</strong>
+        </div>
+    </section>
+
+    <section class="form-card admin-results-card" aria-labelledby="historyTitle">
+        <div class="results-heading">
+            <div>
+                <h2 class="form-title" id="historyTitle">Evaluation history</h2>
+                <p class="form-intro">Student details, ratings, comments, and individual answers.</p>
+            </div>
+            <label class="search-label" for="evaluationSearch">Search submissions</label>
+            <input id="evaluationSearch" class="evaluation-search" type="search" placeholder="Student, instructor, or subject">
+        </div>
+        <p id="resultsMessage" role="status" aria-live="polite">Loading submissions…</p>
+        <div id="resultsTableContainer"></div>
+    </section>
+</main>
+
+<script>
+const API_URL = "http://localhost:8081/api";
+const token = localStorage.getItem("adminToken");
+const message = document.getElementById("resultsMessage");
+const tableContainer = document.getElementById("resultsTableContainer");
+const searchInput = document.getElementById("evaluationSearch");
+let evaluations = [];
+
+if (!token) {
+    window.location.replace("index.html");
+}
+
+function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[character]);
+}
+
+function formatDate(value) {
+    if (!value) return "—";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
+}
+
+function renderEvaluations() {
+    const query = searchInput.value.trim().toLocaleLowerCase();
+    const filtered = evaluations.filter((evaluation) =>
+        [
+            evaluation.studentName,
+            evaluation.studentNumber,
+            evaluation.course,
+            evaluation.yearLevel,
+            evaluation.instructor,
+            evaluation.subject,
+            evaluation.comments
+        ].some((value) => String(value || "").toLocaleLowerCase().includes(query))
+    );
+
+    if (filtered.length === 0) {
+        tableContainer.innerHTML = `<p class="empty-state">${
+            evaluations.length ? "No submissions match your search." : "No evaluations have been submitted yet."
+        }</p>`;
+        return;
+    }
+
+    const rows = filtered.map((evaluation) => {
+        const answers = Array.isArray(evaluation.answers) ? evaluation.answers : [];
+        const answerList = answers.length
+            ? answers.map((answer) =>
+                `<li>Question ${escapeHtml(answer.questionNumber)}: ${escapeHtml(answer.rating)}</li>`
+            ).join("")
+            : "<li>No individual answers recorded.</li>";
+        const studentDetails = [
+            evaluation.studentNumber,
+            evaluation.course,
+            evaluation.yearLevel
+        ].filter(Boolean).map(escapeHtml).join(" · ");
+        const details = `
+            <details class="submission-details">
+                <summary>View details</summary>
+                <div class="submission-detail-content">
+                    <strong>Comments</strong>
+                    <p>${escapeHtml(evaluation.comments || "No comments provided.")}</p>
+                    <strong>Individual answers</strong>
+                    <ol>${answerList}</ol>
+                </div>
+            </details>`;
+
+        return `
+            <tr>
+                <td><strong>${escapeHtml(evaluation.studentName || "Unknown student")}</strong>
+                    <small class="student-meta">${studentDetails || "Student information unavailable"}</small>
+                </td>
+                <td>${escapeHtml(evaluation.instructor || "—")}</td>
+                <td>${escapeHtml(evaluation.subject || "—")}</td>
+                <td>${escapeHtml(evaluation.rating ?? "—")} / 5</td>
+                <td>${escapeHtml(formatDate(evaluation.submittedAt))}</td>
+                <td>${details}</td>
+            </tr>`;
+    }).join("");
+
+    tableContainer.innerHTML = `
+        <div class="admin-table-scroll">
+            <table class="admin-results-table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Instructor</th>
+                        <th>Subject</th>
+                        <th>Overall rating</th>
+                        <th>Submitted</th>
+                        <th>Feedback</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+}
+
+async function loadResults() {
+    try {
+        const response = await fetch(`${API_URL}/results`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.status === 401) {
+            localStorage.removeItem("adminToken");
+            window.location.replace("index.html");
+            return;
+        }
+        if (!response.ok) {
+            throw new Error("Unable to load submitted evaluations.");
+        }
+
+        evaluations = await response.json();
+        document.getElementById("submissionCount").textContent = evaluations.length;
+        const ratedEvaluations = evaluations.filter((evaluation) =>
+            evaluation.rating !== null
+            && evaluation.rating !== undefined
+            && Number.isFinite(Number(evaluation.rating))
+        );
+        const average = ratedEvaluations.length
+            ? ratedEvaluations.reduce((total, evaluation) => total + Number(evaluation.rating), 0) / ratedEvaluations.length
+            : null;
+        document.getElementById("averageRating").textContent = average === null ? "—" : `${average.toFixed(2)} / 5`;
+        message.textContent = "";
+        message.className = "";
+        renderEvaluations();
+    } catch (error) {
+        message.textContent = error.message || "Unable to load submitted evaluations.";
+        message.className = "error";
+    }
+}
+
+searchInput.addEventListener("input", renderEvaluations);
+document.getElementById("logoutButton").addEventListener("click", async () => {
+    try {
+        await fetch(`${API_URL}/admin/logout`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` }
+        });
+    } catch (error) {
+        console.error("Administrator sign-out request failed.", error);
+    } finally {
+        localStorage.removeItem("adminToken");
+        window.location.replace("index.html");
+    }
+});
+
+if (token) loadResults();
+</script>
+</body>
+</html>
